@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Obsidian.Disassembly</RootNamespace>
+    <AssemblyName>Obsidian.Disassembly</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Iced" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Obsidian.Core\Obsidian.Core.csproj" />
+  </ItemGroup>
+</Project>

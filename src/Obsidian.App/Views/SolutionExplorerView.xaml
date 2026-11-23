@@ -1,0 +1,148 @@
+<UserControl x:Class="Obsidian.App.Views.SolutionExplorerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:vm="clr-namespace:Obsidian.App.ViewModels"
+             Background="{DynamicResource Brush.Panel}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Filter and panel actions -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,5">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" Margin="0,0,4,0">
+          <TextBox x:Name="FilterInput"
+                   Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                   Height="24"
+                   Padding="22,2,22,2"
+                   VerticalContentAlignment="Center"
+                   ToolTip="Filter the tree by name" />
+          <icons:PackIconCodicons Kind="SearchFuzzy"
+                                  Width="12"
+                                  Height="12"
+                                  Margin="7,0,0,0"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Foreground="{DynamicResource Brush.TextMuted}"
+                                  IsHitTestVisible="False" />
+          <TextBlock Text="Filter tree…"
+                     Margin="23,0,0,0"
+                     VerticalAlignment="Center"
+                     Style="{StaticResource Text.Caption}"
+                     IsHitTestVisible="False"
+                     Visibility="{Binding FilterText, Converter={StaticResource EmptyStringToVisibility}}" />
+          <Button Style="{StaticResource PanelToolButton}"
+                  Width="20"
+                  Height="20"
+                  Margin="0,0,2,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Command="{Binding ClearFilterCommand}"
+                  ToolTip="Clear filter"
+                  Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVisibility}}">
+            <icons:PackIconCodicons Kind="ChromeClose" Width="10" Height="10" />
+          </Button>
+        </Grid>
+
+        <Button Grid.Column="1"
+                Style="{StaticResource PanelToolButton}"
+                Command="{Binding RefreshCommand}"
+                ToolTip="Refresh tree">
+          <icons:PackIconCodicons Kind="Refresh" Width="13" Height="13" />
+        </Button>
+        <Button Grid.Column="2"
+                Style="{StaticResource PanelToolButton}"
+                Command="{Binding CollapseAllCommand}"
+                ToolTip="Collapse all">
+          <icons:PackIconCodicons Kind="CollapseAll" Width="13" Height="13" />
+        </Button>
+      </Grid>
+    </Border>
+
+    <!-- Tree -->
+    <Grid Grid.Row="1">
+      <TreeView x:Name="ExplorerTree"
+                ItemsSource="{Binding Roots}"
+                Margin="4,4,2,4"
+                SelectedItemChanged="ExplorerTree_OnSelectedItemChanged"
+                MouseDoubleClick="ExplorerTree_OnMouseDoubleClick"
+                PreviewMouseRightButtonDown="ExplorerTree_OnPreviewMouseRightButtonDown"
+                Visibility="{Binding HasImage, Converter={StaticResource BoolToVisibility}}">
+        <TreeView.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="Rename function…" Click="RenameFunction_OnClick" />
+            <MenuItem Header="Edit comment…" Click="EditComment_OnClick" />
+            <MenuItem Header="Add bookmark…" Click="AddBookmark_OnClick" />
+            <MenuItem Header="Remove bookmark" Click="RemoveBookmark_OnClick" />
+            <MenuItem Header="Open call graph" Click="OpenCallGraph_OnClick" />
+          </ContextMenu>
+        </TreeView.ContextMenu>
+        <TreeView.Resources>
+          <HierarchicalDataTemplate DataType="{x:Type vm:ExplorerNode}" ItemsSource="{Binding Children}">
+            <Grid Height="19" ToolTip="{Binding ToolTip}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <icons:PackIconCodicons Grid.Column="0"
+                                      Width="13"
+                                      Height="13"
+                                      Kind="{Binding Icon, Converter={StaticResource ExplorerIcon}}"
+                                      Foreground="{DynamicResource Brush.Icon}"
+                                      VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Title}"
+                         Margin="1,0,6,0"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="2"
+                         Text="{Binding Detail}"
+                         Style="{StaticResource Text.Caption}"
+                         VerticalAlignment="Center"
+                         Margin="0,0,4,0"
+                         MaxWidth="96"
+                         TextTrimming="CharacterEllipsis"
+                         Visibility="{Binding Detail, Converter={StaticResource StringToVisibility}}" />
+            </Grid>
+          </HierarchicalDataTemplate>
+        </TreeView.Resources>
+      </TreeView>
+
+      <StackPanel HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  MaxWidth="210"
+                  Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibility}}">
+        <icons:PackIconCodicons Kind="FileBinary"
+                                Width="28"
+                                Height="28"
+                                HorizontalAlignment="Center"
+                                Foreground="{DynamicResource Brush.TextDisabled}" />
+        <TextBlock Text="No binary loaded"
+                   HorizontalAlignment="Center"
+                   Margin="0,10,0,0"
+                   Style="{StaticResource Text.Secondary}" />
+        <TextBlock Text="Open a PE file to populate the image tree."
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Margin="0,4,0,0"
+                   Style="{StaticResource Text.Caption}" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</UserControl>

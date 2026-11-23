@@ -1,0 +1,230 @@
+<UserControl x:Class="Obsidian.App.Views.DisassemblyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Background="{DynamicResource Brush.Editor}">
+
+  <UserControl.Resources>
+    <Style x:Key="InstructionListItemStyle" TargetType="ListBoxItem"
+           BasedOn="{StaticResource {x:Type ListBoxItem}}">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="26" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Search / navigation -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,6">
+      <WrapPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
+          <TextBlock Text="GO" Style="{StaticResource Text.Section}" VerticalAlignment="Center" Margin="0,0,7,0" />
+          <Grid Width="190">
+            <TextBox x:Name="GoToBox"
+                     Text="{Binding GoToText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="24"
+                     Padding="7,2"
+                     VerticalContentAlignment="Center"
+                     FontFamily="{StaticResource Font.Mono}"
+                     PreviewKeyDown="GoToBox_OnPreviewKeyDown"
+                     ToolTip="Hexadecimal RVA or VA" />
+            <TextBlock Text="RVA / VA (hex)…"
+                       Margin="9,0,0,0"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource Text.Caption}"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding GoToText, Converter={StaticResource EmptyStringToVisibility}}" />
+          </Grid>
+          <Button Style="{StaticResource SecondaryButton}"
+                  Padding="10,3"
+                  Margin="4,0,0,0"
+                  Content="Go"
+                  Command="{Binding GoToAddressCommand}" />
+          <Button Style="{StaticResource PanelToolButton}"
+                  Margin="4,0,0,0"
+                  Command="{Binding GoToEntryPointCommand}"
+                  ToolTip="Go to entry point">
+            <icons:PackIconCodicons Kind="Target" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource PanelToolButton}"
+                  Command="{Binding FollowTargetCommand}"
+                  ToolTip="Follow selected branch (Enter)">
+            <icons:PackIconCodicons Kind="ArrowRight" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource PanelToolButton}"
+                  Click="CopySelection_OnClick"
+                  ToolTip="Copy selected instructions (Ctrl+C)">
+            <icons:PackIconCodicons Kind="Copy" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource PanelToolButton}"
+                  Command="{Binding CancelLoadCommand}"
+                  Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"
+                  ToolTip="Cancel disassembly">
+            <icons:PackIconCodicons Kind="Close" Width="12" Height="12" />
+          </Button>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,4" VerticalAlignment="Center">
+          <ProgressBar Width="100"
+                       Height="4"
+                       Minimum="0"
+                       Maximum="100"
+                       Value="{Binding ProgressPercent}"
+                       Foreground="{DynamicResource Brush.Accent}"
+                       Background="{DynamicResource Brush.BorderSubtle}"
+                       Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding StatusText}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     Margin="10,0,12,0"
+                     TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding InstructionCountText}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     Margin="0,0,12,0" />
+          <TextBlock Text="{Binding ModeText}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     Margin="0,0,12,0" />
+          <TextBlock Text="{Binding FileInfoText}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center" />
+        </StackPanel>
+      </WrapPanel>
+    </Border>
+
+    <!-- Analysis message / warning -->
+    <Border Grid.Row="1"
+            Background="{DynamicResource Brush.Chrome}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,4"
+            Visibility="{Binding Message, Converter={StaticResource StringToVisibility}}">
+      <TextBlock Text="{Binding Message}"
+                 Foreground="{DynamicResource Brush.Warning}"
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Center" />
+    </Border>
+
+    <!-- Column header -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource Brush.Chrome}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1">
+      <Grid Margin="8,0,18,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="110" />
+          <ColumnDefinition Width="170" />
+          <ColumnDefinition Width="84" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" Text="RVA" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="Bytes" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="2" Text="Mnemonic" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="3" Text="Operands" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="3">
+      <ListBox x:Name="InstructionList"
+               ItemsSource="{Binding Rows}"
+               SelectionMode="Extended"
+               ItemContainerStyle="{StaticResource InstructionListItemStyle}"
+               Padding="0,2,0,2"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+               ScrollViewer.CanContentScroll="True"
+               VirtualizingPanel.IsVirtualizing="True"
+               VirtualizingPanel.VirtualizationMode="Recycling"
+               SelectionChanged="InstructionList_OnSelectionChanged"
+               PreviewKeyDown="InstructionList_OnPreviewKeyDown"
+               MouseDoubleClick="InstructionList_OnMouseDoubleClick">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid Height="20" Margin="8,0" ToolTip="{Binding ToolTip}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="170" />
+                <ColumnDefinition Width="84" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0"
+                         Text="{Binding AddressText}"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="11"
+                         Foreground="{DynamicResource Brush.TextMuted}"
+                         VerticalAlignment="Center"
+                         TextTrimming="None" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding BytesText}"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="11"
+                         Foreground="{DynamicResource Brush.TextMuted}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="2"
+                         Text="{Binding Mnemonic}"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="12"
+                         VerticalAlignment="Center"
+                         TextTrimming="None">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsInvalid}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <TextBlock Grid.Column="3"
+                         Text="{Binding Operands}"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="12"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasStaticTarget}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Info}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <Border Background="{DynamicResource Brush.Editor}"
+              IsHitTestVisible="False"
+              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+          <ProgressBar Width="180"
+                       Height="3"
+                       IsIndeterminate="True"
+                       Foreground="{DynamicResource Brush.Accent}"
+                       Background="{DynamicResource Brush.BorderSubtle}" />
+          <TextBlock Text="{Binding StatusText}"
+                     Style="{StaticResource Text.Caption}"
+                     HorizontalAlignment="Center"
+                     Margin="0,10,0,0" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

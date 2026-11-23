@@ -1,0 +1,585 @@
+<Window x:Class="Obsidian.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
+        xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:views="clr-namespace:Obsidian.App.Views"
+        Title="{Binding WindowTitle}"
+        Width="1600"
+        Height="1000"
+        MinWidth="1180"
+        MinHeight="680"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        Background="{DynamicResource Brush.Window}"
+        Icon="pack://application:,,,/Assets/obsidian.ico"
+        AllowDrop="True"
+        DragOver="Window_OnDragOver"
+        Drop="Window_OnDrop"
+        Closing="Window_OnClosing"
+        StateChanged="Window_OnStateChanged">
+
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="34"
+                  ResizeBorderThickness="6"
+                  GlassFrameThickness="0"
+                  CornerRadius="0"
+                  UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
+  <Window.InputBindings>
+    <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenBinaryCommand}" />
+    <KeyBinding Key="O" Modifiers="Control+Shift" Command="{Binding OpenProjectCommand}" />
+    <KeyBinding Key="N" Modifiers="Control+Shift" Command="{Binding NewProjectCommand}" />
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveProjectCommand}" />
+    <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveProjectAsCommand}" />
+    <KeyBinding Key="E" Modifiers="Control" Command="{Binding PatchInstructionCommand}" />
+    <KeyBinding Key="E" Modifiers="Control+Shift" Command="{Binding SavePatchedCopyCommand}" />
+    <KeyBinding Key="Z" Modifiers="Control+Shift" Command="{Binding UndoPatchCommand}" />
+    <KeyBinding Key="Y" Modifiers="Control+Shift" Command="{Binding RedoPatchCommand}" />
+    <KeyBinding Key="R" Modifiers="Control" Command="{Binding ReloadCommand}" />
+    <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseBinaryCommand}" />
+    <KeyBinding Key="Q" Modifiers="Control" Command="{Binding OpenCommandPaletteCommand}" />
+    <KeyBinding Key="G" Modifiers="Control" Command="{Binding GoToAddressCommand}" />
+    <KeyBinding Key="D" Modifiers="Control" Command="{Binding OpenDisassemblyCommand}" />
+    <KeyBinding Key="A" Modifiers="Control+Shift" Command="{Binding OpenAnalysisBrowserCommand}" />
+    <KeyBinding Key="C" Modifiers="Control+Shift" Command="{Binding OpenCallGraphCommand}" />
+    <KeyBinding Key="G" Modifiers="Control+Shift" Command="{Binding OpenControlFlowGraphCommand}" />
+    <KeyBinding Key="H" Modifiers="Control" Command="{Binding OpenHexEditorCommand}" />
+    <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
+    <KeyBinding Key="Left" Modifiers="Alt" Command="{Binding NavigateBackCommand}" />
+    <KeyBinding Key="Right" Modifiers="Alt" Command="{Binding NavigateForwardCommand}" />
+    <KeyBinding Key="F5" Command="{Binding ReloadCommand}" />
+  </Window.InputBindings>
+
+  <Border x:Name="RootBorder"
+          Background="{DynamicResource Brush.Window}"
+          BorderBrush="{DynamicResource Brush.Border}"
+          BorderThickness="1">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="34" />
+        <RowDefinition Height="27" />
+        <RowDefinition Height="36" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="24" />
+      </Grid.RowDefinitions>
+
+      <!-- ============================ Title bar ============================ -->
+      <Grid Grid.Row="0" Background="{DynamicResource Brush.Window}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Margin="10,0,0,0">
+          <Image Source="pack://application:,,,/Assets/obsidian-logo.png"
+                 Width="16"
+                 Height="16"
+                 RenderOptions.BitmapScalingMode="HighQuality" />
+          <TextBlock Text="Obsidian Disassembler"
+                     FontWeight="SemiBold"
+                     Margin="8,0,0,0"
+                     VerticalAlignment="Center" />
+          <Border Width="1" Height="12" Background="{DynamicResource Brush.Border}" Margin="10,0" />
+          <TextBlock Text="{Binding Image.FileName}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     MaxWidth="240"
+                     Visibility="{Binding Image.FileName, Converter={StaticResource StringToVisibility}}" />
+          <Border Width="1" Height="12" Background="{DynamicResource Brush.Border}" Margin="10,0"
+                  Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding ProjectDisplayName}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     MaxWidth="220"
+                     TextTrimming="CharacterEllipsis"
+                     ToolTip="{Binding ProjectPath}"
+                     Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="*"
+                     Foreground="{DynamicResource Brush.Warning}"
+                     Margin="4,0,0,0"
+                     VerticalAlignment="Center"
+                     Visibility="{Binding IsProjectDirty, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
+        <Button Grid.Column="1"
+                Style="{StaticResource TitleBarSearch}"
+                HorizontalAlignment="Center"
+                Command="{Binding OpenCommandPaletteCommand}"
+                WindowChrome.IsHitTestVisibleInChrome="True"
+                ToolTip="Search commands (Ctrl+Q)">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <icons:PackIconCodicons Grid.Column="0"
+                                    Kind="SearchFuzzy"
+                                    Width="12"
+                                    Height="12"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource Brush.TextMuted}" />
+            <TextBlock Grid.Column="1"
+                       Text="Search commands and actions"
+                       Style="{StaticResource Text.Caption}"
+                       Margin="8,0,0,0"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2"
+                       Text="Ctrl+Q"
+                       Style="{StaticResource Text.Caption}"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0" />
+          </Grid>
+        </Button>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal">
+          <Button Style="{StaticResource ToolbarButton}"
+                  Width="34"
+                  Height="34"
+                  Margin="0,0,2,0"
+                  Command="{Binding ToggleThemeCommand}"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  ToolTip="Toggle dark / light theme">
+            <icons:PackIconCodicons Kind="ColorMode" Width="14" Height="14" />
+          </Button>
+          <Button Style="{StaticResource WindowCaptionButton}"
+                  Click="Minimize_OnClick"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  ToolTip="Minimize">
+            <icons:PackIconCodicons Kind="ChromeMinimize" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource WindowCaptionButton}"
+                  Click="MaximizeRestore_OnClick"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  ToolTip="Maximize or restore">
+            <icons:PackIconCodicons x:Name="MaxRestoreIcon" Kind="ChromeMaximize" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource WindowCaptionButton}"
+                  Tag="Close"
+                  Click="Close_OnClick"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  ToolTip="Close">
+            <icons:PackIconCodicons Kind="ChromeClose" Width="12" Height="12" />
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <!-- ============================ Menu bar ============================ -->
+      <Border Grid.Row="1"
+              Background="{DynamicResource Brush.Window}"
+              BorderBrush="{DynamicResource Brush.BorderSubtle}"
+              BorderThickness="0,0,0,1">
+        <Menu x:Name="MainMenu" ToolTipService.ShowOnDisabled="True">
+          <MenuItem x:Name="FileMenu" Header="_File">
+            <MenuItem Header="_Open Binary…" InputGestureText="Ctrl+O" Command="{Binding OpenBinaryCommand}" />
+            <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentMenuItems}"
+                      ToolTipService.ShowOnDisabled="True">
+              <MenuItem.ItemContainerStyle>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                  <Setter Property="Header" Value="{Binding Header}" />
+                  <Setter Property="Command" Value="{Binding Command}" />
+                  <Setter Property="CommandParameter" Value="{Binding Path}" />
+                  <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+                  <Setter Property="ToolTip" Value="{Binding ToolTip}" />
+                  <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                </Style>
+              </MenuItem.ItemContainerStyle>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="_Reload and Re-analyze" InputGestureText="Ctrl+R"
+                      Command="{Binding ReloadCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Close Binary" InputGestureText="Ctrl+W"
+                      Command="{Binding CloseBinaryCommand}" IsEnabled="{Binding HasImage}" />
+            <Separator />
+            <MenuItem Header="_New Project…" InputGestureText="Ctrl+Shift+N"
+                      Command="{Binding NewProjectCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Open Project…" InputGestureText="Ctrl+Shift+O"
+                      Command="{Binding OpenProjectCommand}" />
+            <MenuItem Header="_Save Project" InputGestureText="Ctrl+S"
+                      Command="{Binding SaveProjectCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="Save Project _As…" InputGestureText="Ctrl+Shift+S"
+                      Command="{Binding SaveProjectAsCommand}" IsEnabled="{Binding HasImage}" />
+            <Separator />
+            <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+          </MenuItem>
+
+          <MenuItem Header="_Edit">
+            <MenuItem Header="Copy _File Path" Command="{Binding CopyFilePathCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="Copy _SHA-256" Command="{Binding CopySha256Command}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="Copy _Properties" Command="{Binding CopyPropertiesCommand}" />
+            <Separator />
+            <MenuItem Header="_Patch Selected Instruction…" InputGestureText="Ctrl+E"
+                      Command="{Binding PatchInstructionCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Undo Patch" InputGestureText="Ctrl+Shift+Z"
+                      Command="{Binding UndoPatchCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Redo Patch" InputGestureText="Ctrl+Shift+Y"
+                      Command="{Binding RedoPatchCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="Save _Patched Copy…" InputGestureText="Ctrl+Shift+E"
+                      Command="{Binding SavePatchedCopyCommand}" IsEnabled="{Binding HasImage}" />
+          </MenuItem>
+
+          <MenuItem Header="_View">
+            <MenuItem Header="_Solution Explorer" Command="{Binding TogglePanelCommand}" CommandParameter="solutionExplorer" />
+            <MenuItem Header="_Properties" Command="{Binding TogglePanelCommand}" CommandParameter="properties" />
+            <MenuItem Header="_Output" Command="{Binding TogglePanelCommand}" CommandParameter="output" />
+            <MenuItem Header="_Analysis" Command="{Binding TogglePanelCommand}" CommandParameter="analysis" />
+            <Separator />
+            <MenuItem Header="_Disassembly" InputGestureText="Ctrl+D"
+                      Command="{Binding OpenDisassemblyCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Analysis Browser" InputGestureText="Ctrl+Shift+A"
+                      Command="{Binding OpenAnalysisBrowserCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Call Graph" InputGestureText="Ctrl+Shift+C"
+                      Command="{Binding OpenCallGraphCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="_Control Flow Graph" InputGestureText="Ctrl+Shift+G"
+                      Command="{Binding OpenControlFlowGraphCommand}" />
+            <MenuItem Header="Hex _Editor" InputGestureText="Ctrl+H"
+                      Command="{Binding OpenHexEditorCommand}" IsEnabled="{Binding HasImage}" />
+            <Separator />
+            <MenuItem Header="_Toggle Theme" Command="{Binding ToggleThemeCommand}" />
+            <Separator />
+            <MenuItem Header="_Command Palette…" InputGestureText="Ctrl+Q" Command="{Binding OpenCommandPaletteCommand}" />
+            <MenuItem Header="_Close Active Document" Command="{Binding CloseActiveDocumentCommand}" />
+          </MenuItem>
+
+          <MenuItem Header="_Analysis">
+            <MenuItem Header="_Run PE Scan" InputGestureText="Ctrl+R"
+                      Command="{Binding ReloadCommand}" IsEnabled="{Binding HasImage}" />
+          </MenuItem>
+
+          <MenuItem Header="_Navigation">
+            <MenuItem Header="_Go to Address…" InputGestureText="Ctrl+G"
+                      Command="{Binding GoToAddressCommand}" IsEnabled="{Binding HasImage}" />
+            <MenuItem Header="Go to _Entry Point" Command="{Binding NavigateToEntryPointCommand}" IsEnabled="{Binding HasImage}" />
+            <Separator />
+            <MenuItem Header="_Back" InputGestureText="Alt+Left"
+                      Command="{Binding NavigateBackCommand}" IsEnabled="{Binding CanGoBack}" />
+            <MenuItem Header="_Forward" InputGestureText="Alt+Right"
+                      Command="{Binding NavigateForwardCommand}" IsEnabled="{Binding CanGoForward}" />
+          </MenuItem>
+
+          <MenuItem Header="_Tools">
+            <MenuItem Header="_Settings…" InputGestureText="Ctrl+," Command="{Binding OpenSettingsCommand}" />
+            <Separator />
+            <MenuItem Header="Open _Log Folder" Command="{Binding OpenLogFolderCommand}" />
+            <MenuItem Header="Open _Data Folder" Command="{Binding OpenDataFolderCommand}" />
+            <Separator />
+            <MenuItem Header="_Clear Output" Command="{Binding Output.ClearCommand}" />
+          </MenuItem>
+
+          <MenuItem Header="_Window">
+            <MenuItem Header="_Solution Explorer" Command="{Binding TogglePanelCommand}" CommandParameter="solutionExplorer" />
+            <MenuItem Header="_Properties" Command="{Binding TogglePanelCommand}" CommandParameter="properties" />
+            <MenuItem Header="_Output" Command="{Binding TogglePanelCommand}" CommandParameter="output" />
+            <MenuItem Header="_Analysis" Command="{Binding TogglePanelCommand}" CommandParameter="analysis" />
+            <Separator />
+            <MenuItem Header="_Close Active Document" Command="{Binding CloseActiveDocumentCommand}" />
+          </MenuItem>
+
+          <MenuItem Header="_Help">
+            <MenuItem Header="_Keyboard Shortcuts" Command="{Binding ShowShortcutsCommand}" />
+            <Separator />
+            <MenuItem Header="_About Obsidian Disassembler" Command="{Binding OpenAboutCommand}" />
+          </MenuItem>
+        </Menu>
+      </Border>
+
+      <!-- ============================ Command bar ============================ -->
+      <Border Grid.Row="2"
+              Background="{DynamicResource Brush.Chrome}"
+              BorderBrush="{DynamicResource Brush.BorderSubtle}"
+              BorderThickness="0,0,0,1">
+        <Grid Margin="6,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenBinaryCommand}" ToolTip="Open binary (Ctrl+O)">
+              <icons:PackIconCodicons Kind="RootFolderOpened" Width="15" Height="15" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding SaveProjectCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Save project (Ctrl+S)">
+              <icons:PackIconCodicons Kind="Save" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding ReloadCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Reload and analyze (Ctrl+R)">
+              <icons:PackIconCodicons Kind="Refresh" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding CancelCommand}"
+                    IsEnabled="{Binding IsBusy}" ToolTip="Stop analysis">
+              <icons:PackIconCodicons Kind="StopCircle" Width="14" Height="14" />
+            </Button>
+
+            <Border Style="{StaticResource VerticalRule}" />
+
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding GoToAddressCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Go to address (Ctrl+G)">
+              <icons:PackIconCodicons Kind="GoToFile" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Command palette (Ctrl+Q)">
+              <icons:PackIconCodicons Kind="SearchFuzzy" Width="14" Height="14" />
+            </Button>
+
+            <Border Style="{StaticResource VerticalRule}" />
+
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding NavigateBackCommand}"
+                    IsEnabled="{Binding CanGoBack}" ToolTip="Back (Alt+Left)">
+              <icons:PackIconCodicons Kind="ArrowLeft" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding NavigateForwardCommand}"
+                    IsEnabled="{Binding CanGoForward}" ToolTip="Forward (Alt+Right)">
+              <icons:PackIconCodicons Kind="ArrowRight" Width="14" Height="14" />
+            </Button>
+
+            <Border Style="{StaticResource VerticalRule}" />
+
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding TogglePanelCommand}"
+                    CommandParameter="solutionExplorer" ToolTip="Toggle Solution Explorer">
+              <icons:PackIconCodicons Kind="LayoutSidebarLeft" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding TogglePanelCommand}"
+                    CommandParameter="properties" ToolTip="Toggle Properties">
+              <icons:PackIconCodicons Kind="SymbolProperty" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding TogglePanelCommand}"
+                    CommandParameter="output" ToolTip="Toggle Output">
+              <icons:PackIconCodicons Kind="Output" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding TogglePanelCommand}"
+                    CommandParameter="analysis" ToolTip="Toggle Analysis">
+              <icons:PackIconCodicons Kind="Beaker" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenDisassemblyCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Disassembly (Ctrl+D)">
+              <icons:PackIconCodicons Kind="Code" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenControlFlowGraphCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Control-flow graph (Ctrl+Shift+G)">
+              <icons:PackIconCodicons Kind="TypeHierarchy" Width="14" Height="14" />
+            </Button>
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenHexEditorCommand}"
+                    IsEnabled="{Binding HasImage}" ToolTip="Hex editor (Ctrl+H)">
+              <icons:PackIconCodicons Kind="FileBinary" Width="14" Height="14" />
+            </Button>
+
+            <Border Style="{StaticResource VerticalRule}" />
+
+            <Button Style="{StaticResource ToolbarButton}" Command="{Binding OpenSettingsCommand}" ToolTip="Settings (Ctrl+,)">
+              <icons:PackIconCodicons Kind="SettingsGear" Width="14" Height="14" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ============================ Docking layout ============================ -->
+      <avalonDock:DockingManager x:Name="DockManager"
+                                 Grid.Row="3"
+                                 ActiveContentChanged="DockManager_OnActiveContentChanged"
+                                 Background="{DynamicResource Brush.Editor}"
+                                 AllowMixedOrientation="True">
+        <avalonDock:LayoutRoot>
+          <avalonDock:LayoutPanel Orientation="Horizontal">
+            <avalonDock:LayoutAnchorablePane DockWidth="288">
+              <avalonDock:LayoutAnchorable Title="Solution Explorer"
+                                           ContentId="solutionExplorer"
+                                           CanClose="True"
+                                           CanHide="True"
+                                           CanFloat="True">
+                <views:SolutionExplorerView DataContext="{Binding Explorer}" />
+              </avalonDock:LayoutAnchorable>
+            </avalonDock:LayoutAnchorablePane>
+
+            <avalonDock:LayoutPanel Orientation="Vertical">
+              <avalonDock:LayoutDocumentPane x:Name="DocumentPane" />
+              <avalonDock:LayoutAnchorablePane DockHeight="210">
+                <avalonDock:LayoutAnchorable Title="Output"
+                                             ContentId="output"
+                                             CanClose="True"
+                                             CanHide="True"
+                                             CanFloat="True">
+                  <views:OutputView DataContext="{Binding Output}" />
+                </avalonDock:LayoutAnchorable>
+                <avalonDock:LayoutAnchorable Title="Analysis"
+                                             ContentId="analysis"
+                                             CanClose="True"
+                                             CanHide="True"
+                                             CanFloat="True">
+                  <views:AnalysisView DataContext="{Binding}" />
+                </avalonDock:LayoutAnchorable>
+              </avalonDock:LayoutAnchorablePane>
+            </avalonDock:LayoutPanel>
+
+            <avalonDock:LayoutAnchorablePane DockWidth="304">
+              <avalonDock:LayoutAnchorable Title="Properties"
+                                           ContentId="properties"
+                                           CanClose="True"
+                                           CanHide="True"
+                                           CanFloat="True">
+                <views:PropertiesView DataContext="{Binding Properties}" />
+              </avalonDock:LayoutAnchorable>
+            </avalonDock:LayoutAnchorablePane>
+          </avalonDock:LayoutPanel>
+        </avalonDock:LayoutRoot>
+      </avalonDock:DockingManager>
+
+      <!-- ============================ Status bar ============================ -->
+      <Border Grid.Row="4"
+              Background="{DynamicResource Brush.Window}"
+              BorderBrush="{DynamicResource Brush.Border}"
+              BorderThickness="0,1,0,0">
+        <Grid Margin="8,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <Border Grid.Column="0" ClipToBounds="True">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <icons:PackIconCodicons Grid.Column="0"
+                                      Kind="Info"
+                                      Width="11"
+                                      Height="11"
+                                      VerticalAlignment="Center"
+                                      Foreground="{DynamicResource Brush.Accent}" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Status.Message}"
+                         Style="{StaticResource Text.Caption}"
+                         VerticalAlignment="Center"
+                         Margin="6,0,10,0"
+                         TextTrimming="CharacterEllipsis" />
+              <ProgressBar Grid.Column="2"
+                           Width="96"
+                           Height="3"
+                           Value="{Binding Status.Progress}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Visibility="{Binding Status.IsBusy, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+          </Border>
+
+          <TextBlock Grid.Column="1"
+                     Text="{Binding Status.ImageInfo}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     Margin="16,0,0,0" />
+          <TextBlock Grid.Column="2"
+                     Text="{Binding Status.FindingsInfo}"
+                     Style="{StaticResource Text.Caption}"
+                     VerticalAlignment="Center"
+                     Margin="16,0,0,0" />
+          <Rectangle Grid.Column="3" Width="1" Height="10" Fill="{DynamicResource Brush.Border}" Margin="14,0" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ThemeLabel}" Style="{StaticResource Text.Caption}" />
+            <TextBlock Text="{Binding AppVersion, StringFormat=v{0}}"
+                       Style="{StaticResource Text.Caption}"
+                       Margin="10,0,8,0" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ============================ Command palette ============================ -->
+      <Grid x:Name="PaletteOverlay"
+            Grid.RowSpan="5"
+            Background="{DynamicResource Brush.Overlay}"
+            Panel.ZIndex="100"
+            WindowChrome.IsHitTestVisibleInChrome="True"
+            Visibility="{Binding IsPaletteOpen, Converter={StaticResource BoolToVisibility}}"
+            MouseLeftButtonDown="PaletteOverlay_OnMouseLeftButtonDown">
+        <Border Width="640"
+                MaxHeight="440"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,82,0,0"
+                Background="{DynamicResource Brush.Popup}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="44" />
+              <RowDefinition Height="1" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="12,0,12,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <icons:PackIconCodicons Grid.Column="0" Kind="SearchFuzzy" Width="15" Height="15"
+                                      VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}" />
+              <TextBox x:Name="PaletteInput"
+                       Grid.Column="1"
+                       Text="{Binding PaletteQuery, UpdateSourceTrigger=PropertyChanged}"
+                       Background="Transparent"
+                       BorderThickness="0"
+                       FontSize="14"
+                       Padding="10,0,0,0"
+                       VerticalContentAlignment="Center"
+                       CaretBrush="{DynamicResource Brush.Text}"
+                       PreviewKeyDown="PaletteInput_OnPreviewKeyDown" />
+              <TextBlock Grid.Column="1"
+                         Text="Type a command or action…"
+                         Margin="12,0,0,0"
+                         VerticalAlignment="Center"
+                         Style="{StaticResource Text.Caption}"
+                         IsHitTestVisible="False"
+                         Visibility="{Binding PaletteQuery, Converter={StaticResource EmptyStringToVisibility}}" />
+              <TextBlock Grid.Column="2" Text="ESC" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+            </Grid>
+
+            <Border Grid.Row="1" Style="{StaticResource Hairline}" />
+
+            <ListBox x:Name="PaletteList"
+                     Grid.Row="2"
+                     ItemsSource="{Binding FilteredPaletteCommands}"
+                     SelectedItem="{Binding SelectedPaletteCommand, Mode=TwoWay}"
+                     MaxHeight="330"
+                     Padding="4"
+                     PreviewMouseLeftButtonUp="PaletteList_OnPreviewMouseLeftButtonUp">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="8,5">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                      <TextBlock Text="{Binding Title}" FontSize="12" />
+                      <TextBlock Text="{Binding Category}" Style="{StaticResource Text.Caption}" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding Shortcut}" Style="{StaticResource Text.Mono}"
+                               VerticalAlignment="Center" Margin="16,0,0,0" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Border Grid.Row="3" Background="{DynamicResource Brush.Chrome}" Padding="10,0">
+              <Grid>
+                <TextBlock Text="Enter to run · Up/Down to select · Esc to dismiss" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="{Binding FilteredPaletteCommands.Count, StringFormat={}{0} commands}" Style="{StaticResource Text.Caption}"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

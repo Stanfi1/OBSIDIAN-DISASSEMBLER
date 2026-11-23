@@ -1,0 +1,121 @@
+<Window x:Class="Obsidian.App.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="About Obsidian Disassembler"
+        Width="560"
+        SizeToContent="Height"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Brush.Panel}">
+
+  <Border Background="{DynamicResource Brush.Panel}"
+          BorderBrush="{DynamicResource Brush.Border}"
+          BorderThickness="1">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0" Height="34" Background="{DynamicResource Brush.Chrome}" MouseLeftButtonDown="Header_OnMouseLeftButtonDown">
+        <Grid>
+          <TextBlock Text="About" Margin="12,0,46,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+          <Button Style="{StaticResource WindowCaptionButton}"
+                  Width="34"
+                  Height="34"
+                  HorizontalAlignment="Right"
+                  Tag="Close"
+                  Click="Close_OnClick">
+            <icons:PackIconCodicons Kind="ChromeClose" Width="10" Height="10" />
+          </Button>
+        </Grid>
+      </Border>
+
+      <StackPanel Grid.Row="1" Margin="24,22,24,20">
+        <StackPanel Orientation="Horizontal">
+          <Image Source="pack://application:,,,/Assets/obsidian-logo.png"
+                 Width="48"
+                 Height="48"
+                 Margin="0,0,16,0"
+                 VerticalAlignment="Top" />
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Obsidian Disassembler" Style="{StaticResource Text.Display}" />
+            <TextBlock x:Name="VersionText" Style="{StaticResource Text.Caption}" Margin="0,3,0,0" />
+          </StackPanel>
+        </StackPanel>
+
+        <TextBlock Text="A modular reverse-engineering workspace for native Windows binaries. Built around a strict separation of format parsing, disassembly, analysis and the shell."
+                   Style="{StaticResource Text.Secondary}"
+                   TextWrapping="Wrap"
+                   TextTrimming="None"
+                   Margin="0,18,0,0" />
+
+        <TextBlock Text="CURRENT SCOPE" Style="{StaticResource Text.Section}" Margin="0,22,0,0" />
+        <Border Style="{StaticResource Hairline}" Margin="0,5,0,8" />
+        <TextBlock Text="Version 0.5 · professional workflow"
+                   FontSize="12"
+                   Margin="0,0,0,4" />
+        <TextBlock Text="File loading, PE32/PE32+ parsing, complete PE directories, structural observations, themes, docking, a virtualized hex editor, Iced x86/x64 disassembly, seed-based function discovery, cross references, strings, an interactive control-flow graph, a call-neighborhood graph, a searchable analysis browser, SQLite projects with annotations/bookmarks and persisted patch operations, plus validated instruction-byte patching with undo and save-copy."
+                   Style="{StaticResource Text.Caption}"
+                   TextWrapping="Wrap"
+                   TextTrimming="None" />
+
+        <TextBlock Text="BUILT WITH" Style="{StaticResource Text.Section}" Margin="0,20,0,0" />
+        <Border Style="{StaticResource Hairline}" Margin="0,5,0,8" />
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="116" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <TextBlock Grid.Row="0" Grid.Column="0" Text="Runtime" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="0" Grid.Column="1" Text=".NET 10 · WPF" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Text="PE parsing" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="AsmResolver 6.1" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="2" Grid.Column="0" Text="Disassembly" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="Iced 1.22" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="3" Grid.Column="0" Text="Docking" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="AvalonDock 5 · VS2022 theme" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="4" Grid.Column="0" Text="Icons" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="Codicons" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="5" Grid.Column="0" Text="Logging" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="Serilog" Style="{StaticResource Text.Mono}" Margin="0,2" />
+          <TextBlock Grid.Row="6" Grid.Column="0" Text="Projects" Style="{StaticResource Text.Caption}" Margin="0,2" />
+          <TextBlock Grid.Row="6" Grid.Column="1" Text="Microsoft.Data.Sqlite 10 · SQLite" Style="{StaticResource Text.Mono}" Margin="0,2" />
+        </Grid>
+
+        <TextBlock Text="Third-party notices: AsmResolver, Iced, CommunityToolkit and Microsoft.Data.Sqlite (MIT), AvalonDock (Ms-PL), Serilog (Apache-2.0), Codicons © Microsoft (CC BY 4.0), SQLite (public domain)."
+                   Style="{StaticResource Text.Caption}"
+                   TextWrapping="Wrap"
+                   TextTrimming="None"
+                   Margin="0,14,0,0" />
+      </StackPanel>
+
+      <Border Grid.Row="2"
+              Background="{DynamicResource Brush.Chrome}"
+              BorderBrush="{DynamicResource Brush.Border}"
+              BorderThickness="0,1,0,0"
+              Padding="12,10">
+        <Button Content="OK"
+                Style="{StaticResource AccentButton}"
+                MinWidth="82"
+                HorizontalAlignment="Right"
+                IsDefault="True"
+                Click="Close_OnClick" />
+      </Border>
+    </Grid>
+  </Border>
+</Window>

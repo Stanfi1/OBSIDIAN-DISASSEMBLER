@@ -1,0 +1,207 @@
+<UserControl x:Class="Obsidian.App.Views.FunctionGraphView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Background="{DynamicResource Brush.Editor}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,6">
+      <WrapPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
+          <TextBlock Text="FUNCTION" Style="{StaticResource Text.Section}" VerticalAlignment="Center" Margin="0,0,7,0" />
+          <ComboBox Width="300"
+                    Height="24"
+                    ItemsSource="{Binding Functions}"
+                    SelectedItem="{Binding SelectedFunction, Mode=TwoWay}"
+                    MaxDropDownHeight="420"
+                    ToolTip="Select a discovered function">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Function.Name}"
+                           FontFamily="{StaticResource Font.Mono}"
+                           FontSize="11"
+                           TextTrimming="CharacterEllipsis" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
+          <Button Style="{StaticResource SecondaryButton}"
+                  Padding="10,3"
+                  Content="Fit"
+                  Click="FitButton_OnClick"
+                  ToolTip="Fit the graph to the viewport" />
+          <Button Style="{StaticResource SecondaryButton}"
+                  Padding="10,3"
+                  Margin="4,0,0,0"
+                  Content="100%"
+                  Click="ResetZoomButton_OnClick"
+                  ToolTip="Reset zoom and center the graph" />
+          <Button Style="{StaticResource PanelToolButton}"
+                  Margin="4,0,0,0"
+                  Click="OpenDisassemblyButton_OnClick"
+                  ToolTip="Open the selected function in disassembly">
+            <icons:PackIconCodicons Kind="Code" Width="12" Height="12" />
+          </Button>
+        </StackPanel>
+
+        <TextBlock Text="{Binding FunctionHeader}"
+                   FontFamily="{StaticResource Font.Mono}"
+                   FontSize="11"
+                   VerticalAlignment="Center"
+                   Margin="0,0,14,4"
+                   TextTrimming="CharacterEllipsis" />
+        <TextBlock Text="{Binding GraphSummary}"
+                   Style="{StaticResource Text.Caption}"
+                   VerticalAlignment="Center"
+                   Margin="0,0,14,4" />
+        <TextBlock Text="{Binding FunctionDetails}"
+                   Style="{StaticResource Text.Caption}"
+                   VerticalAlignment="Center"
+                   Margin="0,0,0,4" />
+      </WrapPanel>
+    </Border>
+
+    <Border Grid.Row="1"
+            Background="{DynamicResource Brush.Chrome}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,3">
+      <TextBlock Text="Drag empty space to pan · mouse wheel to zoom · click a block to open it in disassembly"
+                 Style="{StaticResource Text.Caption}" />
+    </Border>
+
+    <Grid x:Name="Viewport"
+          Grid.Row="2"
+          Background="{DynamicResource Brush.Editor}"
+          ClipToBounds="True"
+          MouseWheel="Viewport_OnMouseWheel"
+          MouseLeftButtonDown="Viewport_OnMouseLeftButtonDown"
+          MouseMove="Viewport_OnMouseMove"
+          MouseLeftButtonUp="Viewport_OnMouseLeftButtonUp"
+          MouseLeave="Viewport_OnMouseLeave">
+
+      <Grid x:Name="GraphSurface"
+            Width="{Binding GraphWidth}"
+            Height="{Binding GraphHeight}"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            RenderTransformOrigin="0,0">
+        <Grid.RenderTransform>
+          <TransformGroup>
+            <ScaleTransform x:Name="GraphScale" ScaleX="1" ScaleY="1" />
+            <TranslateTransform x:Name="GraphTranslate" X="0" Y="0" />
+          </TransformGroup>
+        </Grid.RenderTransform>
+
+        <!-- Edges are stroked geometries in graph coordinates. -->
+        <ItemsControl ItemsSource="{Binding Edges}" IsHitTestVisible="False">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Canvas />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Path Data="{Binding Geometry}"
+                    StrokeThickness="1.2"
+                    StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round"
+                    ToolTip="{Binding ToolTip}">
+                <Path.Style>
+                  <Style TargetType="Path">
+                    <Setter Property="Stroke" Value="{DynamicResource Brush.TextMuted}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsBackEdge}" Value="True">
+                        <Setter Property="Stroke" Value="{DynamicResource Brush.Warning}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Path.Style>
+              </Path>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Blocks are absolutely positioned on a Canvas. -->
+        <ItemsControl ItemsSource="{Binding Nodes}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Canvas />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemContainerStyle>
+            <Style TargetType="ContentPresenter">
+              <Setter Property="Canvas.Left" Value="{Binding X}" />
+              <Setter Property="Canvas.Top" Value="{Binding Y}" />
+            </Style>
+          </ItemsControl.ItemContainerStyle>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Width="{Binding Width}"
+                      Height="{Binding Height}"
+                      Background="{DynamicResource Brush.Panel}"
+                      Cursor="Hand"
+                      ToolTip="{Binding ToolTip}"
+                      MouseLeftButtonDown="Node_OnMouseLeftButtonDown">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsEntry}" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                        <Setter Property="BorderThickness" Value="2" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding IsInvalid}" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <Grid Margin="8,5,8,5">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0"
+                             Text="{Binding Title}"
+                             FontFamily="{StaticResource Font.Mono}"
+                             FontSize="12"
+                             Foreground="{DynamicResource Brush.Text}"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Row="1"
+                             Text="{Binding Subtitle}"
+                             Style="{StaticResource Text.Caption}"
+                             Margin="0,1,0,4" />
+                  <ItemsControl Grid.Row="2" ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                   FontFamily="{StaticResource Font.Mono}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Brush.TextSecondary}"
+                                   TextTrimming="CharacterEllipsis" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+    </Grid>
+  </Grid>
+</UserControl>

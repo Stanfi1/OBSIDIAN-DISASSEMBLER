@@ -1,0 +1,201 @@
+<UserControl x:Class="Obsidian.App.Views.HexEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Background="{DynamicResource Brush.Editor}">
+
+  <UserControl.Resources>
+    <Style x:Key="HexListItemStyle" TargetType="ListBoxItem"
+           BasedOn="{StaticResource {x:Type ListBoxItem}}">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="28" />
+      <RowDefinition Height="26" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Search / navigation -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,6">
+      <WrapPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
+          <TextBlock Text="FIND" Style="{StaticResource Text.Section}" VerticalAlignment="Center" Margin="0,0,7,0" />
+          <Grid Width="210">
+            <TextBox x:Name="SearchBox"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Height="24"
+                     Padding="7,2"
+                     VerticalContentAlignment="Center"
+                     PreviewKeyDown="SearchBox_OnPreviewKeyDown"
+                     ToolTip="Hex bytes (e.g. 4D 5A) or ASCII text" />
+            <TextBlock Text="4D 5A or text…"
+                       Margin="9,0,0,0"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource Text.Caption}"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding SearchText, Converter={StaticResource EmptyStringToVisibility}}" />
+          </Grid>
+          <RadioButton Content="Hex" GroupName="HexSearchMode" IsChecked="{Binding IsHexSearch}" Margin="8,0,6,0" />
+          <RadioButton Content="ASCII" GroupName="HexSearchMode" IsChecked="{Binding IsAsciiSearch}" Margin="0,0,8,0" />
+          <Button Style="{StaticResource PanelToolButton}"
+                  Command="{Binding FindPreviousCommand}"
+                  ToolTip="Find previous (Shift+Enter)">
+            <icons:PackIconCodicons Kind="ArrowUp" Width="12" Height="12" />
+          </Button>
+          <Button Style="{StaticResource PanelToolButton}"
+                  Command="{Binding FindNextCommand}"
+                  ToolTip="Find next (Enter)">
+            <icons:PackIconCodicons Kind="ArrowDown" Width="12" Height="12" />
+          </Button>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
+          <TextBlock Text="GO" Style="{StaticResource Text.Section}" VerticalAlignment="Center" Margin="0,0,7,0" />
+          <TextBox x:Name="GoToBox"
+                   Text="{Binding GoToText, UpdateSourceTrigger=PropertyChanged}"
+                   Width="108"
+                   Height="24"
+                   Padding="7,2"
+                   VerticalContentAlignment="Center"
+                   FontFamily="{StaticResource Font.Mono}"
+                   PreviewKeyDown="GoToBox_OnPreviewKeyDown"
+                   ToolTip="File offset in hexadecimal" />
+          <Button Style="{StaticResource SecondaryButton}"
+                  Padding="10,3"
+                  Margin="4,0,0,0"
+                  Content="Go"
+                  Command="{Binding GoToOffsetCommand}" />
+        </StackPanel>
+
+        <Button Style="{StaticResource PanelToolButton}"
+                Margin="0,0,12,4"
+                Click="CopySelection_OnClick"
+                ToolTip="Copy selected rows (Ctrl+C)">
+          <icons:PackIconCodicons Kind="Copy" Width="12" Height="12" />
+        </Button>
+
+        <TextBlock Text="{Binding FileInfoText}"
+                   Style="{StaticResource Text.Caption}"
+                   VerticalAlignment="Center"
+                   Margin="0,0,0,4" />
+      </WrapPanel>
+    </Border>
+
+    <!-- Address mode / selection / status -->
+    <Border Grid.Row="1"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,0">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="ADDRESS" Style="{StaticResource Text.Section}" Margin="0,0,8,0" />
+          <RadioButton Content="Offset" GroupName="HexAddressMode" IsChecked="{Binding IsFileOffsetMode}" Margin="0,0,8,0" />
+          <RadioButton Content="RVA" GroupName="HexAddressMode" IsChecked="{Binding IsRvaMode}" Margin="0,0,8,0" />
+          <RadioButton Content="VA" GroupName="HexAddressMode" IsChecked="{Binding IsVirtualAddressMode}" />
+        </StackPanel>
+
+        <TextBlock Grid.Column="1"
+                   Text="{Binding SelectionText}"
+                   Style="{StaticResource Text.Caption}"
+                   VerticalAlignment="Center"
+                   Margin="16,0,12,0"
+                   TextTrimming="CharacterEllipsis" />
+
+        <TextBlock Grid.Column="2"
+                   Text="{Binding StatusText}"
+                   FontSize="11"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
+              <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsStatusError}" Value="True">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </Grid>
+    </Border>
+
+    <!-- Column header -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource Brush.Chrome}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1">
+      <Grid Margin="8,0,18,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="126" />
+          <ColumnDefinition Width="346" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" Text="{Binding AddressHeader}" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="Hexadecimal bytes" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="2" Text="ASCII" Style="{StaticResource Text.TableHeader}" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <!-- Virtualized data -->
+    <ListBox x:Name="HexList"
+             Grid.Row="3"
+             ItemsSource="{Binding Rows}"
+             SelectionMode="Extended"
+             ItemContainerStyle="{StaticResource HexListItemStyle}"
+             Padding="0,2,0,2"
+             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+             ScrollViewer.CanContentScroll="True"
+             SelectionChanged="HexList_OnSelectionChanged"
+             PreviewKeyDown="HexList_OnPreviewKeyDown">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid Height="20" Margin="8,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="126" />
+              <ColumnDefinition Width="346" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="{Binding AddressText}"
+                       FontFamily="{StaticResource Font.Mono}"
+                       FontSize="11"
+                       Foreground="{DynamicResource Brush.TextMuted}"
+                       VerticalAlignment="Center"
+                       TextTrimming="None" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding HexText}"
+                       FontFamily="{StaticResource Font.Mono}"
+                       FontSize="12"
+                       Foreground="{DynamicResource Brush.Text}"
+                       VerticalAlignment="Center"
+                       TextTrimming="None" />
+            <TextBlock Grid.Column="2"
+                       Text="{Binding AsciiText}"
+                       FontFamily="{StaticResource Font.Mono}"
+                       FontSize="12"
+                       Foreground="{DynamicResource Brush.TextSecondary}"
+                       VerticalAlignment="Center"
+                       TextTrimming="None" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</UserControl>

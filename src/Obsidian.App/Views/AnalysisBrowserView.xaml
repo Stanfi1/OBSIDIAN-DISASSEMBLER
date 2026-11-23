@@ -1,0 +1,301 @@
+<UserControl x:Class="Obsidian.App.Views.AnalysisBrowserView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Background="{DynamicResource Brush.Editor}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="8,6">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0"
+                Width="440"
+                Height="24"
+                HorizontalAlignment="Left"
+                Background="{DynamicResource Brush.Editor}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <icons:PackIconCodicons Grid.Column="0"
+                                    Kind="Search"
+                                    Width="11"
+                                    Height="11"
+                                    Margin="7,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource Brush.TextMuted}" />
+            <TextBox x:Name="SearchBox"
+                     Grid.Column="1"
+                     Margin="4,0"
+                     Padding="0"
+                     VerticalContentAlignment="Center"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="{Binding SearchHint}" />
+            <Button Grid.Column="2"
+                    Style="{StaticResource ToolbarButton}"
+                    Width="22"
+                    Height="22"
+                    Command="{Binding ClearSearchCommand}"
+                    ToolTip="Clear filter"
+                    Visibility="{Binding SearchText, Converter={StaticResource StringToVisibility}}">
+              <icons:PackIconCodicons Kind="Close" Width="9" Height="9" />
+            </Button>
+          </Grid>
+        </Border>
+        <TextBlock Grid.Column="1"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0"
+                   Style="{StaticResource Text.Caption}"
+                   Text="{Binding SearchHint}" />
+      </Grid>
+    </Border>
+
+    <TabControl Grid.Row="1"
+                Grid.RowSpan="2"
+                Background="{DynamicResource Brush.Editor}"
+                BorderThickness="0"
+                Padding="0"
+                SelectedIndex="{Binding SelectedTabIndex}">
+      <TabControl.Resources>
+        <Style TargetType="TabItem">
+          <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+          <Setter Property="FontSize" Value="12" />
+          <Setter Property="Template">
+            <Setter.Value>
+              <ControlTemplate TargetType="TabItem">
+                <Border x:Name="TabBorder"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="0,0,0,2"
+                        Padding="14,7">
+                  <ContentPresenter ContentSource="Header"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsSelected" Value="True">
+                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource Brush.Panel}" />
+                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                  </Trigger>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource Brush.Hover}" />
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Setter.Value>
+          </Setter>
+        </Style>
+      </TabControl.Resources>
+      <TabItem Header="Functions">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Border Grid.Row="0" Background="{DynamicResource Brush.Chrome}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1" Padding="8,3">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="NAME" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="1" Text="RVA" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="2" Text="BLOCKS" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="3" Text="INSTR" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="4" Text="SOURCES" Style="{StaticResource Text.Section}" />
+            </Grid>
+          </Border>
+          <ListBox Grid.Row="1"
+                   x:Name="FunctionList"
+                   ItemsSource="{Binding Functions}"
+                   SelectedItem="{Binding SelectedFunction, Mode=TwoWay}"
+                   MouseDoubleClick="List_OnMouseDoubleClick"
+                   VirtualizingPanel.IsVirtualizing="True"
+                   VirtualizingPanel.VirtualizationMode="Recycling"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                   BorderThickness="0">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+              </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Height="23" Margin="8,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="{Binding Function.Name}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Function.Name}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Function.Rva, Converter={StaticResource HexRva}}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" />
+                  <TextBlock Grid.Column="2" Text="{Binding Function.BasicBlockCount}" FontSize="11" />
+                  <TextBlock Grid.Column="3" Text="{Binding Function.InstructionCount}" FontSize="11" />
+                  <TextBlock Grid.Column="4" Text="{Binding Function.SourceText}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" TextTrimming="CharacterEllipsis" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Strings">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Border Grid.Row="0" Background="{DynamicResource Brush.Chrome}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1" Padding="8,3">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="90" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="VALUE" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="1" Text="ENCODING" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="2" Text="RVA" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="3" Text="REFS" Style="{StaticResource Text.Section}" />
+            </Grid>
+          </Border>
+          <ListBox Grid.Row="1"
+                   x:Name="StringList"
+                   ItemsSource="{Binding Strings}"
+                   SelectedItem="{Binding SelectedString, Mode=TwoWay}"
+                   MouseDoubleClick="List_OnMouseDoubleClick"
+                   VirtualizingPanel.IsVirtualizing="True"
+                   VirtualizingPanel.VirtualizationMode="Recycling"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                   BorderThickness="0">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+              </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Height="23" Margin="8,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="96" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="90" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="{Binding Preview}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Value}" />
+                  <TextBlock Grid.Column="1" Text="{Binding EncodingText}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" />
+                  <TextBlock Grid.Column="2" Text="{Binding Rva, Converter={StaticResource HexRva}}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" />
+                  <TextBlock Grid.Column="3" Text="{Binding ReferenceCount}" FontSize="11" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Cross references">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Border Grid.Row="0" Background="{DynamicResource Brush.Chrome}" BorderBrush="{DynamicResource Brush.BorderSubtle}" BorderThickness="0,0,0,1" Padding="8,3">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="FROM" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="1" Text="TO" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="2" Text="KIND" Style="{StaticResource Text.Section}" />
+              <TextBlock Grid.Column="3" Text="SOURCE" Style="{StaticResource Text.Section}" />
+            </Grid>
+          </Border>
+          <ListBox Grid.Row="1"
+                   x:Name="ReferenceList"
+                   ItemsSource="{Binding References}"
+                   SelectedItem="{Binding SelectedReference, Mode=TwoWay}"
+                   MouseDoubleClick="List_OnMouseDoubleClick"
+                   VirtualizingPanel.IsVirtualizing="True"
+                   VirtualizingPanel.VirtualizationMode="Recycling"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                   BorderThickness="0">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+              </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid Height="23" Margin="8,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="{Binding FromRva, Converter={StaticResource HexRva}}" FontFamily="{StaticResource Font.Mono}" FontSize="11" />
+                  <TextBlock Grid.Column="1" Text="{Binding ToRva, Converter={StaticResource HexRva}}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{DynamicResource Brush.Info}" />
+                  <TextBlock Grid.Column="2" Text="{Binding KindText}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" />
+                  <TextBlock Grid.Column="3" Text="{Binding SourceText}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </TabItem>
+    </TabControl>
+
+    <Border Grid.Row="3"
+            Background="{DynamicResource Brush.Chrome}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,1,0,0"
+            Padding="8,4">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" Style="{StaticResource Text.Caption}"
+                   Text="Double-click a row to navigate to the function, string or source instruction." />
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <TextBlock Text="{Binding FunctionCountText}" Style="{StaticResource Text.Caption}" Margin="0,0,12,0" />
+          <TextBlock Text="{Binding StringCountText}" Style="{StaticResource Text.Caption}" Margin="0,0,12,0" />
+          <TextBlock Text="{Binding ReferenceCountText}" Style="{StaticResource Text.Caption}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>
+

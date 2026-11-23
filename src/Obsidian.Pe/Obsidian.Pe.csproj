@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Obsidian.Pe</RootNamespace>
+    <AssemblyName>Obsidian.Pe</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AsmResolver" />
+    <PackageReference Include="AsmResolver.PE" />
+    <PackageReference Include="AsmResolver.PE.File" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Obsidian.Core\Obsidian.Core.csproj" />
+  </ItemGroup>
+</Project>

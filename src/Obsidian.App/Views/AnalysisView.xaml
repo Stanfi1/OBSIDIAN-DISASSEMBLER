@@ -1,0 +1,125 @@
+<UserControl x:Class="Obsidian.App.Views.AnalysisView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Background="{DynamicResource Brush.Panel}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0"
+            Background="{DynamicResource Brush.Panel}"
+            BorderBrush="{DynamicResource Brush.BorderSubtle}"
+            BorderThickness="0,0,0,1"
+            Padding="10,5">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="Structural observations" Style="{StaticResource Text.Section}" />
+          <TextBlock Text="PE-level checks and unusual characteristics. Not a malware verdict."
+                     Style="{StaticResource Text.Caption}"
+                     Margin="0,2,0,0" />
+        </StackPanel>
+        <TextBlock Grid.Column="1"
+                   Text="{Binding Status.FindingsInfo}"
+                   Style="{StaticResource Text.Caption}"
+                   VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" Margin="10,5,10,3">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="86" />
+        <ColumnDefinition Width="180" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="90" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Grid.Column="0" Text="Severity" Style="{StaticResource Text.TableHeader}" />
+      <TextBlock Grid.Column="1" Text="Code" Style="{StaticResource Text.TableHeader}" />
+      <TextBlock Grid.Column="2" Text="Observation" Style="{StaticResource Text.TableHeader}" />
+      <TextBlock Grid.Column="3" Text="RVA" Style="{StaticResource Text.TableHeader}" />
+    </Grid>
+
+    <Grid Grid.Row="2">
+      <ListBox x:Name="FindingsList"
+               ItemsSource="{Binding Overview.Findings}"
+               SelectionChanged="FindingsList_OnSelectionChanged"
+               Padding="0,2,0,2">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="86" />
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="90" />
+              </Grid.ColumnDefinitions>
+
+              <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <icons:PackIconCodicons Kind="{Binding Severity, Converter={StaticResource FindingIcon}}"
+                                        Width="12"
+                                        Height="12"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center">
+                  <icons:PackIconCodicons.Style>
+                    <Style TargetType="icons:PackIconCodicons">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Info}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </icons:PackIconCodicons.Style>
+                </icons:PackIconCodicons>
+                <TextBlock Text="{Binding Severity}" FontSize="11" VerticalAlignment="Center">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Info}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </StackPanel>
+
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Code}"
+                         Style="{StaticResource Text.Mono}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis"
+                         ToolTip="{Binding Code}" />
+
+              <TextBlock Grid.Column="2"
+                         Text="{Binding Title}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis"
+                         ToolTip="{Binding Detail}" />
+
+              <TextBlock Grid.Column="3"
+                         Text="{Binding Rva, Converter={StaticResource HexRva}}"
+                         Style="{StaticResource Text.Mono}"
+                         VerticalAlignment="Center" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <TextBlock Text="Open a binary to inspect structural observations."
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"
+                 Style="{StaticResource Text.Caption}"
+                 Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVisibility}}" />
+    </Grid>
+  </Grid>
+</UserControl>
